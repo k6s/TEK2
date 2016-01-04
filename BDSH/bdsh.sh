@@ -16,11 +16,11 @@ v_key=0
 EFNOENT='No base found : file '
 ESYNTAX='Syntax error : '
 
-usage='usage bdsh.sh [-k] [-f db_file]\
-\n\t\t(put (<clef> | $<clef>) |
-\n\t\t del (<clef> | $<clef>) |
-\n\t\t select [<expr> | $<clef>] |
-\n\t\t flush)'
+usage='Usage : bdsh.sh [-k] [-f db_file]
+(put (<clef> | $<clef>) |
+del (<clef> | $<clef>) |
+select [<expr> | $<clef>] |
+flush)'
 
 ## REGEXP special characters escape
 ## Concerned chars are delimiter (/) and \[]^$.*
@@ -46,7 +46,7 @@ select_key_var()
 {
 	key=${key:1}
 	escape_chars_regexp
-	key=$(grep "^.*$safe_key.*$delim" $db_file)
+	key_val=$(grep "^$safe_key$delim" $db_file | cut -d $delim -f2)
 }
 
 select_key()
@@ -57,11 +57,13 @@ select_key()
 	else
 		key=$((i+1))
 		key=${!key}
-		escape_chars_regexp
 	fi
-	if [ ${key:0:1} == '$' ]; then
+	if [ ${key:0} ] && [ ${key:0:1} == '$' ]; then
 		select_key_var
+		key=$key_val
+		echo newkeyval $key
 	fi
+	escape_chars_regexp
 	if [ $v_key == 1 ]; then
 		grep "^.*$safe_key.*$delim" $db_file
 	else
@@ -78,8 +80,9 @@ del_key()
 	elif [ $n_args -ge 1 ]; then
 		key=$((i+1))
 		key=${!key}
-		if [ $key -eq '$*']; then
+		if [ ${key:0:1} == '$' ]; then
 			select_key_var
+			key=$key_val
 		fi
 		escape_chars_regexp
 		if [ $n_args -eq 1 ]; then
@@ -87,10 +90,14 @@ del_key()
 		else
 			value=$((i+2))
 			value=${!value}
+			if [ ${value:0:1} == '$' ]; then
+				select_key_var
+				value=$key_val
+			fi
 			escape_chars_repl
 			sed -i "/^$safe_value$/d" $db_file
-		fi	
-	fi
+		fi
+	fi	
 }
 
 put_key()
