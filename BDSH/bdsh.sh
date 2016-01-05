@@ -3,9 +3,6 @@
 ## TODO: ######################################################################
 #
 #	- newline in key/value ?
-#	- Order by modification time aswell as insert time ?
-#	- empty key
-#	- r/w database access check
 #
 ###############################################################################
 
@@ -111,8 +108,13 @@ select_key()
 	fi
 	while read -r line; do
 		len=$(cut -d $delim -f1 <<< "${line}")
-		key=$(cut -d $delim -f2- <<< "${line}"| cut -b -${len} \
-			| grep "^${select_regexp}")
+		if [ $len -le 0 ]; then
+			len=0
+			key=''
+		else
+			key=$(cut -d $delim -f2- <<< "${line}"| cut -b -${len} \
+				| grep "^${select_regexp}")
+		fi
 		escape_chars_regexp
 		if [ $v_key == 1 ]; then
 			cut -d $delim -f 2- <<< "${line}" | grep "^${safe_key}$delim"
@@ -187,16 +189,9 @@ put_key()
 		return 0
 	fi
 
-	## if key is found in db replace entry else append it.
-	line=$(grep "^[0-9][0-9]*$delim${safe_key}$delim" < "${db_file}")
-	if [ 0 -eq $? ]; then
-		escape_chars_repl
-		sed -i "s/\(^[0-9][0-9]*$delim\)${safe_key}$delim.*$/\1${safe_value}/g"\
-			"${db_file}"
-	else
-		echo "${#key}$delim${key}$delim${value}" >> "${db_file}"
-	fi
-	return 2
+	## if key is found in db delete it and append new one.
+	sed -i "/^[0-9][0-9]*$delim${safe_key}$delim/d" "${db_file}"
+	echo "${#key}$delim${key}$delim${value}" >> "${db_file}"
 }
 
 flush_db()
@@ -209,24 +204,40 @@ flush_db()
 	fi
 }
 
+check_db_file()
+{
+	if [ ! -f "${db_file}" ]; then
+		echo $EFNOENT \'${db_file}\' not found or is not a regular file
+		exit 1
+	fi
+	if [ $1 == 'r' ] && [ ! -r "${db_file}" ]; then
+		echo $EFNOENT \'${db_file}\' permission denied
+		exit 1
+	fi
+	if [ $2 == 'w' ] && [ ! -w "${db_file}" ]; then
+		echo $EFNOENT \'${db_file}\' permission denied
+		exit 1
+	fi
+}
+
 get_cmdline()
 {
 	i=$((OPTIND))
 	case ${!i} in
 		"put")
+			check_db_file r w
 			put_key "$@"
 			;;
 		"flush")
+			check_db_file w 0
 			flush_db
 			;;
 		"select")
-			if [ ! -f "${db_file}" ]; then
-				echo $EFNOENT \'${db_file}\'
-				exit 1
-			fi
+			check_db_file r 0
 			select_key "$@"
 			;;
 		"del")
+			check_db_file r w
 			if [ ! -f "$db_file" ]; then
 				echo $EFNOENT \'${db_file}\'
 				exit 1
