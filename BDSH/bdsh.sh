@@ -1,11 +1,5 @@
 #!/bin/sh
 
-## TODO: ######################################################################
-#
-#	- newline in key/value ?
-#
-###############################################################################
-
 delim='='
 v_key=0
 
@@ -26,7 +20,8 @@ escape_chars_regexp()
 	safe_key=$(sed -e 's/\\/\\\\/g;s/\//\\\//g' \
 		-e 's/\[/\\\[/g;s/\]/\\\]/g' \
 	   	-e 's/\^/\\\^/g;s/\$/\\\$/g' \
-		-e 's/\./\\\./g;s/\*/\\\*/g' <<< "${key}")
+		-e 's/\./\\\./g;s/\*/\\\*/g' \
+		<<< "${key}")
 }
 
 ## Replacement text special characters escape for sed
@@ -70,7 +65,7 @@ select_val_var()
 select_key()
 {
 	if [ $n_args -ge 3 ]; then
-		echo $ESYNTAX $USAGE 1>&2
+		echo $ESYNTAX $usage 1>&2
 		exit 1
 	fi
 	if [ $n_args == 0 ]; then
@@ -78,7 +73,7 @@ select_key()
 	else
 		key="${cmd[1]}"
 	fi
-	if [ "k${key}" != "k" ] && [ ${key:0:1} == '$' ]; then
+	if [ "k${key}" != "k" ] && [ "${key:0:1}" == '$' ]; then
 		select_key_var
 		key=${key_val}
 	fi
@@ -89,12 +84,12 @@ select_key()
 	fi
 	while read -r line; do
 		len=$(cut -sd $delim -f1 <<< "${line}")
-		if [ ! -z $len ]; then
-			if [ $len -le 0 ]; then
+		if [ ! -z "${len}" ]; then
+			if [ "${len}" -le 0 ]; then
 				len=0
 				key=''
 			else
-				key=$(cut -d $delim -f2- <<< "${line}"| cut -b -${len} \
+				key=$(cut -d $delim -f2- <<< "${line}"| cut -b -"${len}" \
 					| grep "${select_regexp}")
 			fi
 			escape_chars_regexp
@@ -117,9 +112,9 @@ del_key()
 	## get key value in command line arguments
 	elif [ $n_args -ge 1 ]; then
 		key="${cmd[1]}"
-		if [ "k${key}" != "k" ] && [ ${key:0:1} == '$' ]; then
+		if [ "k${key}" != "k" ] && [ "${key:0:1}" == '$' ]; then
 			select_key_var
-			key=${key_val}
+			key="${key_val}"
 		fi
 		escape_chars_regexp
 
@@ -132,7 +127,7 @@ del_key()
 		## matches database's one, else do nothing.
 		else
 			value="${cmd[2]}"
-			if [ "k${value}" != "k" ] && [ ${value:0:1} == '$' ]; then
+			if [ "k${value}" != "k" ] && [ "${value:0:1}" == '$' ]; then
 				select_val_var
 			fi
 			escape_chars_repl
@@ -149,20 +144,19 @@ put_key()
 	fi
 
 	## get key and value from command line arguments.
-	key=${cmd[1]}
-	value=${cmd[2]}
-	if [ "k${key}" != "k"  ] && [ ${key:0:1} == '$' ]; then
+	key="${cmd[1]}"
+	value="${cmd[2]}"
+	if [ "k${key}" != "k"  ] && [ "${key:0:1}" == '$' ]; then
 		select_key_var
-		key=${key_val}
+		key="${key_val}"
 	fi
-	if [ "k${value}" != "k" ] && [ ${value:0:1} == '$' ]; then
+	if [ "k${value}" != "k" ] && [ "${value:0:1}" == '$' ]; then
 		select_val_var
 	fi
 	escape_chars_regexp
-	value=$(sed 's/%n/\%n/g' <<< "${value}");
 
 	## if file is empty or does not exists then append new entry.
-	if [ ! -f "$db_file" ]; then
+	if [ ! -f "${db_file}" ]; then
 		echo "${#key}$delim${key}$delim${value}" >> "${db_file}"
 		return 0
 	fi
@@ -174,7 +168,7 @@ put_key()
 
 flush_db()
 {
-	echo -n '' > "$db_file" 1>&2
+	echo -n '' > "${db_file}" 1>&2
 }
 
 check_db_file()
@@ -191,7 +185,7 @@ check_db_file()
 		exit 1
 	fi
 	if [ $3 == 'w' ] && [ ! -w "${db_file}" ]; then
-		echo $EFNOENT \'${db_file}\' permission denied 2 1>&2
+		echo $EFNOENT \'${db_file}\' permission denied 1>&2
 		exit 1
 	fi
 }
@@ -204,7 +198,7 @@ eval_cmdline()
 			put_key "$@"
 			;;
 		"flush")
-			check_db_file x w 0
+			check_db_file x 0 w
 			flush_db
 			;;
 		"select")
@@ -213,7 +207,7 @@ eval_cmdline()
 			;;
 		"del")
 			check_db_file x r w
-			if [ ! -f "$db_file" ]; then
+			if [ ! -f "${db_file}" ]; then
 				echo $EFNOENT \'${db_file}\' 1>&2
 				exit 1
 			fi
