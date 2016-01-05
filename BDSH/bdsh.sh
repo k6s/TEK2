@@ -75,16 +75,6 @@ select_key_var()
 	done < "${db_file}"
 	echo $EKNOENT \'"${key_name}"\'
 	exit 1
-
-#	key=${key:1}
-#	escape_chars_regexp
-#	key_val=$(grep "^[0-9][0-9]*$delim${safe_key}$delim" "${db_file}")
-#	if [ "k${key_val}" == "k" ]; then
-#		echo $EKNOENT ${key}
-#		exit 1
-#	fi
-#	key_val=$(grep "^[0-9][0-9]*$delim${safe_key}$delim" "${db_file}" \
-#		| cut -d $delim -f3)
 }
 
 select_val_var()
