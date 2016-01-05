@@ -183,12 +183,15 @@ check_db_file()
 		echo $EFNOENT \'${db_file}\' not found or is not a regular file 1>&2
 		exit 1
 	fi
+	if [ $1 != 'x' ] && [ ! -f "${db_file}" ]; then
+		return
+	fi
 	if [ $2 == 'r' ] && [ ! -r "${db_file}" ]; then
 		echo $EFNOENT \'${db_file}\' permission denied 1>&2
 		exit 1
 	fi
 	if [ $3 == 'w' ] && [ ! -w "${db_file}" ]; then
-		echo $EFNOENT \'${db_file}\' permission denied 1>&2
+		echo $EFNOENT \'${db_file}\' permission denied 2 1>&2
 		exit 1
 	fi
 }
@@ -304,14 +307,15 @@ get_options()
 ARGC=$#
 ARGV="$@"
 unset db_file
-get_options "$@"
 n_args=0
+get_options "$@"
 if [ -z "${db_file}" ]; then
 	db_file="./sh.db"
 fi
 if [ $n_args -ge 1 ]; then
 	eval_cmdline "$cmd"
 else
-	echo $usage 1>&2
+	echo $ESYNTAX $usage 1>&2
+	exit 1
 fi
 exit 0
