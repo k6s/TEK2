@@ -25,45 +25,59 @@ del (<clef> | $<clef>) |
 select [<expr> | $<clef>] |
 flush)'
 
+# Shell special characters escape
+# Concerned chars are * ? [  ] ' " \ $ ; & (  ) | ^ < > new-line space tab " '
+escape_chars_sh()
+{
+	safe_sh=$(sed -e 's/\\/\\\\/g;s/\$/\\\$/g' \
+		-e 's/\*/\\\*/g;s/\?/\\\?/g' \
+	   	-e 's/\[/\\\[/g;s/\]/\\\]/g' \
+		-e 's/"/\\"/g;' -e "s/'/\\'/" \
+		-e 's/;/\\;/g;s/&/\\&/g' \
+		-e 's/(/\\(/g;s/)/\\)/g' \
+		-e 's/|/\\|/g;s/\^/\\\^/g' \
+		-e 's/</\\\</g;s/>/\\>/g;s/-/\\-/g'\
+	   	<<< "$1")
+}
+
 ## REGEXP special characters escape
 ## Concerned chars are delimiter (/) and \[]^$.*
 escape_chars_regexp()
 {
-	safe_key=$(echo "${key}" | sed \
-		-e 's/\\/\\\\/g;s/\//\\\//g' \
+	safe_key=$(sed -e 's/\\/\\\\/g;s/\//\\\//g' \
 		-e 's/\[/\\\[/g;s/\]/\\\]/g' \
 	   	-e 's/\^/\\\^/g;s/\$/\\\$/g' \
-		-e 's/\./\\\./g;s/\*/\\\*/g')
+		-e 's/\./\\\./g;s/\*/\\\*/g' <<< "${key}")
 }
 
 ## Replacement text special characters escape for sed
 ## Concerned characters are delimiter (/) and &\
 escape_chars_repl()
 {
-	safe_value=$(echo "$key$delim$value" | sed \
-		-e 's/\&/\\\&/g;s/\\/\\\\/g' \
-		-e 's/\//\\\//g')
+	safe_value=$(sed -e 's/\&/\\\&/g;s/\\/\\\\/g' \
+		-e 's/\//\\\//g' <<< "${key}$delim${value}")
 }
 
 select_key_var()
 {
 	key=${key:1}
 	escape_chars_regexp
-	key_val=$(grep "^$safe_key$delim" "$db_file")
-	if [ "k$key_val" == "k" ]; then
-		echo $EKNOENT $key
+	key_val=$(grep "^[0-9][0-9]*$delim${safe_key}$delim" "${db_file}")
+	if [ "k${key_val}" == "k" ]; then
+		echo $EKNOENT ${key}
 		exit 1
 	fi
-	key_val=$(grep "^$safe_key$delim" "$db_file" | cut -d $delim -f2)
+	key_val=$(grep "^[0-9][0-9]*$delim${safe_key}$delim" "${db_file}" \
+		| cut -d $delim -f3)
 }
 
 select_val_var()
 {
-	ktmp=$key
-	key=$value
+	ktmp=${key}
+	key=${value}
 	select_key_var
-	value=$key_val
-	key=$ktmp
+	value=${key_val}
+	key=${ktmp}
 }
 
 select_key()
@@ -79,30 +93,30 @@ select_key()
 		key=$((i+1))
 		key=${!key}
 	fi
-	if [ "k$key" != "k" ] && [ ${key:0:1} == '$' ]; then
+	if [ "k${key}" != "k" ] && [ ${key:0:1} == '$' ]; then
 		select_key_var
-		key=$key_val
+		key=${key_val}
 		escape_chars_regexp
 
 		## key must be a complete match vs grep result for 'regular' key
-		select_regexp="^$safe_key$"
+		select_regexp="${safe_key}$"
 	else
-		select_regexp="$key"
+		select_regexp=".*${key}"
 	fi
-	key=$(grep '' "$db_file" | cut -d $delim -f 1 \
-		| grep "$select_regexp")
+	key=$(cut -d $delim -f 2 < "${db_file}" | grep "^${select_regexp}")
 	if [ "k${key}" == "k" ]; then
 		exit 0
 	fi
 	escape_chars_regexp
-	select_regexp=$safe_key
+	select_regexp=${safe_key}
 	if [ $v_key == 1 ]; then
 		for var in "${select_regexp}"; do
-			grep "$var$delim" "$db_file"
+			cut -d $delim -f 2- < "${db_file}" | grep "^${var}$delim"
 		done
 	else
 		for var in "${select_regexp}"; do
-			grep "$var$delim" "$db_file" | cut -d $delim -f 2-
+			cut -d $delim -f 2- < "$db_file" | grep "^${var}$delim" \
+				| cut -d $delim -f 2-
 		done
 	fi
 }
@@ -118,26 +132,27 @@ del_key()
 	elif [ $n_args -ge 1 ]; then
 		key=$((i+1))
 		key=${!key}
-		if [ "k${!key}" != "k" ] && [ ${key:0:1} == '$' ]; then
+		if [ "k${key}" != "k" ] && [ ${key:0:1} == '$' ]; then
 			select_key_var
-			key=$key_val
+			key=${key_val}
 		fi
 		escape_chars_regexp
 
 		## if no value specified, delete only key's content, not whole  entry
 		if [ $n_args -eq 1 ]; then
-			sed -i "s/\(^$safe_key$delim\).*$/\1/g" "$db_file"
+			sed -i "s/\(^[0-9][0-9]*$delim${safe_key}$delim\).*$/\1/g" \
+				"${db_file}"
 
 		## if a value is specified, delete whole entry if provided value
 		## matches database's one, else do nothing.
 		else
 			value=$((i+2))
 			value=${!value}
-			if [ "k$value" != "k" ] && [ ${value:0:1} == '$' ]; then
+			if [ "k${value}" != "k" ] && [ ${value:0:1} == '$' ]; then
 				select_val_var
 			fi
 			escape_chars_repl
-			sed -i "/^$safe_value$/d" "$db_file"
+			sed -i "/^[0-9][0-9]*$delim${safe_value}$/d" "$db_file"
 		fi
 	fi	
 }
@@ -155,28 +170,29 @@ put_key()
 	value=$((i+2))
 	key=${!key}
 	value=${!value}
-	if [ "k$key" != "k"  ] && [ ${key:0:1} == '$' ]; then
+	if [ "k${key}" != "k"  ] && [ ${key:0:1} == '$' ]; then
 		select_key_var
-		key=$key_val
+		key=${key_val}
 	fi
-	if [ "k$value" != "k" ] && [ ${value:0:1} == '$' ]; then
+	if [ "k${value}" != "k" ] && [ ${value:0:1} == '$' ]; then
 		select_val_var
 	fi
 	escape_chars_regexp
 
 	## if file is empty or does not exists then append new entry.
 	if [ ! -f "$db_file" ]; then
-		echo "$key$delim$value" >> "$db_file"
+		echo "${#key}$delim${key}$delim${value}" >> "${db_file}"
 		return 0
 	fi
 
 	## if key is found in db replace entry else append it.
-	line=$(grep "^$safe_key$delim" "$db_file")
+	line=$(grep "^[0-9][0-9]*$delim${safe_key}$delim" < "${db_file}")
 	if [ 0 -eq $? ]; then
 		escape_chars_repl
-		sed -i "s/^$safe_key$delim.*$/$safe_value/g" "$db_file"
+		sed -i "s/\(^[0-9][0-9]*$delim\)${safe_key}$delim.*$/\1${safe_value}/g"\
+			"${db_file}"
 	else
-		echo "$key$delim$value" >> "$db_file"
+		echo "${#key}$delim${key}$delim${value}" >> "${db_file}"
 	fi
 	return 2
 }
@@ -202,15 +218,15 @@ get_cmdline()
 			flush_db
 			;;
 		"select")
-			if [ ! -f "$db_file" ]; then
-				echo $EFNOENT $db_file
+			if [ ! -f "${db_file}" ]; then
+				echo $EFNOENT \'${db_file}\'
 				exit 1
 			fi
 			select_key "$@"
 			;;
 		"del")
 			if [ ! -f "$db_file" ]; then
-				echo $EFNOENT $db_file
+				echo $EFNOENT \'${db_file}\'
 				exit 1
 			fi
 			del_key "$@"
@@ -229,6 +245,10 @@ get_options()
 		case $opt in
 			f)
 				db_file=$OPTARG
+				if [ "k${db_file}" != "k" ] && [ "${db_file:0:1}" == "-" ];
+				then
+					db_file="./${db_file}"
+				fi
 				;;
 			k)
 				v_key=1
