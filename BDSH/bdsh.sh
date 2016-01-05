@@ -58,15 +58,33 @@ escape_chars_repl()
 
 select_key_var()
 {
-	key=${key:1}
+	key="${key:1}"
+	key_name="${key}"
 	escape_chars_regexp
-	key_val=$(grep "^[0-9][0-9]*$delim${safe_key}$delim" "${db_file}")
-	if [ "k${key_val}" == "k" ]; then
-		echo $EKNOENT ${key}
-		exit 1
-	fi
-	key_val=$(grep "^[0-9][0-9]*$delim${safe_key}$delim" "${db_file}" \
-		| cut -d $delim -f3)
+	select_regexp="^${safe_key}$"
+	while read -r line; do
+		len=$(cut -d $delim -f1 <<< "${line}")
+		key=$(cut -d $delim -f2- <<< "${line}"| cut -b -${len} \
+			| grep "${select_regexp}")
+		if [ "k${key}" != "k" ]; then
+			escape_chars_regexp
+			key_val=$(cut -d $delim -f 2- <<< "${line}" \
+				| grep "^${safe_key}$delim" | cut -b $((len+2))-)
+			return 
+		fi
+	done < "${db_file}"
+	echo $EKNOENT \'"${key_name}"\'
+	exit 1
+
+#	key=${key:1}
+#	escape_chars_regexp
+#	key_val=$(grep "^[0-9][0-9]*$delim${safe_key}$delim" "${db_file}")
+#	if [ "k${key_val}" == "k" ]; then
+#		echo $EKNOENT ${key}
+#		exit 1
+#	fi
+#	key_val=$(grep "^[0-9][0-9]*$delim${safe_key}$delim" "${db_file}" \
+#		| cut -d $delim -f3)
 }
 
 select_val_var()
