@@ -2,10 +2,8 @@
 
 ## TODO: ######################################################################
 #
-#	- Escape newline character in replacement string
-#	- Check key for '=' and make them illegal
-#	- File order by modification time aswell as insert time ?
-#	- ./bdsh.sh  -f -k (select | del) 4  
+#	- newline in key/value ?
+#	- Order by modification time aswell as insert time ?
 #	- empty key
 #	- r/w database access check
 #
@@ -103,22 +101,18 @@ select_key()
 	else
 		select_regexp=".*${key}"
 	fi
-	key=$(cut -d $delim -f 2 < "${db_file}" | grep "^${select_regexp}")
-	if [ "k${key}" == "k" ]; then
-		exit 0
-	fi
-	escape_chars_regexp
-	select_regexp=${safe_key}
-	if [ $v_key == 1 ]; then
-		for var in "${select_regexp}"; do
-			cut -d $delim -f 2- < "${db_file}" | grep "^${var}$delim"
-		done
-	else
-		for var in "${select_regexp}"; do
-			cut -d $delim -f 2- < "$db_file" | grep "^${var}$delim" \
-				| cut -d $delim -f 2-
-		done
-	fi
+	while read -r line; do
+		len=$(cut -d $delim -f1 <<< "${line}")
+		key=$(cut -d $delim -f2- <<< "${line}"| cut -b -${len} \
+			| grep "^${select_regexp}")
+		escape_chars_regexp
+		if [ $v_key == 1 ]; then
+			cut -d $delim -f 2- <<< "${line}" | grep "^${safe_key}$delim"
+		else
+			cut -d $delim -f 2- <<< "${line}" | grep "^${safe_key}$delim" \
+				| cut -b $((len+2))-
+		fi
+	done < "${db_file}"
 }
 
 del_key()
