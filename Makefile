@@ -28,7 +28,7 @@ $(NAME): $(OBJS)
 	$(CC) $(OBJS) -o $(NAME) -shared
 
 %.o:%.c
-	$(CC) $(CFLAGS) $@ $< -c -ggdb
+	$(CC) $(CFLAGS) -o $@ $< -c -ggdb
 
 clean:
 	$(RM) $(OBJS)
