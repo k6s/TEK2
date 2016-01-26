@@ -8,7 +8,7 @@ void				free(void *ptr)
 
 	if (!ptr)
 		return ;
-	printf("FREEING %p\n", ptr);
+//	printf("FREEING %p\n", ptr);
 	chk = (t_chk_hdr *)((uintptr_t)ptr - CHK_HDR_SZ);
 	wilderness = (t_chk_hdr *)((uintptr_t)sbrk(0) - CHK_HDR_SZ);
 	if ((freed = wilderness->nxt))
