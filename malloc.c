@@ -1,16 +1,6 @@
 #include "malloc.h"
 #include <stdio.h>
 
-t_chk_hdr	*chk_last(t_chk_hdr *free_chk)
-{
-	if (free_chk)
-	{
-		while (free_chk->nxt)
-			free_chk = free_chk->nxt;
-	}
-	return (free_chk);
-}
-
 void		*find_free_chk(t_chk_hdr *free_chk, size_t size)
 {
 	size = ALIGN(size + CHK_HDR_SZ);
