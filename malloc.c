@@ -15,7 +15,9 @@ void		*find_free_chk(t_chk_hdr *free_chk, size_t size)
 {
 	size = ALIGN(size + CHK_HDR_SZ);
 	printf("seraching for a new chk\n");
-	while (free_chk && (free_chk->size + CHK_HDR_SZ) < size)
+	free_chk = (t_chk_hdr *)((uintptr_t)sbrk(0) - CHK_HDR_SZ);
+	free_chk = free_chk->nxt;
+	while (free_chk && free_chk->size < size)
 		free_chk = free_chk->nxt;
 	if (free_chk)
 		printf("found a free chk of size %x\n", free_chk->size);
@@ -53,9 +55,8 @@ void			*wild_split(t_chk_hdr *wilderness, size_t size)
 	size = ALIGN(size + CHK_HDR_SZ);
 	if (size + CHK_HDR_SZ >= wilderness->size)
 		return (NULL);
-	printf("SIZE %x %x\n", size, wilderness->size);
-	chk = (t_chk_hdr *)((size_t)((size_t)wilderness + size + CHK_HDR_SZ)
-					   	- wilderness->size);
+	printf("SIZE %x %x\n", size + CHK_HDR_SZ, wilderness->size);
+	chk = (t_chk_hdr *)((size_t)((uintptr_t)wilderness + size) - wilderness->size);
 	wilderness->size -= size;
 	chk->size = size;
 	chk->prv = (void *)0;
@@ -82,5 +83,5 @@ void					*malloc(size_t size)
 	printf("CHK %p %lld\n", chk, chk->size);
 	printf("CHK %p\n", (uintptr_t)chk + CHK_HDR_SZ);
 	assert(!((uintptr_t)chk % ALIGN_SIZE));
-	return ((uintptr_t)chk + CHK_HDR_SZ);
+	return ((void *)((uintptr_t)chk + CHK_HDR_SZ));
 }
