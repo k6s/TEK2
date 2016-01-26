@@ -12,20 +12,23 @@ CC	= gcc
 
 RM	= rm -f
 
-CFLAGS	= -fPIC -03 -g -Wall -Wextra -Werror
+CFLAGS	= -fpic -Wall -Wextra
 
 LDFLAGS = -shared
 
-NAME	= libmy_malloc
+NAME	= libmy_malloc.so
 
-SRCS	= main.c
+SRCS	= malloc.c free.c
 
 OBJS	= $(SRCS:.c=.o)
 
 all:	$(NAME)
 
-$(NAME):
-	$(CC) $(SRCS) -o $(NAME) $(CFLAGS)
+$(NAME): $(OBJS)
+	$(CC) $(OBJS) -o $(NAME) -shared
+
+%.o:%.c
+	$(CC) $(CFLAGS) $@ $< -c -ggdb
 
 clean:
 	$(RM) $(OBJS)

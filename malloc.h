@@ -14,6 +14,14 @@
 # define ALIGN(x)			(IS_DISALIGNED(x) ? DO_ALIGN(x) : (x))
 
 typedef struct s_chk_hdr		t_chk_hdr;
+typedef struct s_heap_hdr		t_heap_hdr;
+
+struct			s_heap_hdr
+{
+	size_t		size;
+};
+
+# define HEAP_HDR_SZ		sizeof(t_heap_hdr)
 
 struct			s_chk_hdr
 {
@@ -23,5 +31,6 @@ struct			s_chk_hdr
 };
 
 # define CHK_HDR_SZ			sizeof(t_chk_hdr)
+# define CHK_WILD_OFF		(CHK_HDR_SZ + HEAP_HDR_SZ)
 
 #endif
