@@ -19,6 +19,5 @@ void		*realloc(void *ptr, size_t size)
   if ((new_ptr = malloc(size)))
 	 memcpy(new_ptr, ptr, old_size < size ? old_size : size);
   free(ptr);
-  printf("got %p\n", new_ptr);
   return (new_ptr);
 }

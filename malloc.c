@@ -44,7 +44,7 @@ void			*heap_new_page(size_t size)
 	{
 		new_arena.top->size += g_arena.top->size;
 		if ((new_arena.top->nxt = g_arena.top->nxt))
-			g_arena.top->nxt->prv = new_arena.top;
+			new_arena.top->nxt->prv = new_arena.top;
 		new_arena.top->prv = NULL;
 	}
 	memcpy(&g_arena, &new_arena, HEAP_HDR_SZ);
