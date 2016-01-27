@@ -16,8 +16,8 @@ void		*realloc(void *ptr, size_t size)
     }
   if ((old_size = ((t_chk_hdr *)((uintptr_t)ptr - CHK_HDR_SZ))->size) == size)
     return (ptr);
-  new_ptr = malloc(size);
-  memcpy(new_ptr, ptr, old_size < size ? old_size : size);
+  if ((new_ptr = malloc(size)))
+	 memcpy(new_ptr, ptr, old_size < size ? old_size : size);
   free(ptr);
   return (new_ptr);
 }

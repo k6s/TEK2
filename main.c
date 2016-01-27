@@ -14,25 +14,35 @@ int				main(void)
 	free(s[1]);
 	free(s[0]);
 	s[0] = malloc(0x5);
+	memset(s[0], 'a', 5);
 	free(s[0]);
 	s[0] = malloc(0x238);
+	memset(s[0], 'a', 0x238);
 	s[1] = malloc(0x640);
+	memset(s[1], 'a', 0x640);
 	s[2] = malloc(0x400);
+	memset(s[2], 'a', 0x400);
 	s[3] = malloc(0x800);
+	memset(s[3], 'a', 0x800);
 	free(s[2]);
 	free(s[0]);
 	s[4] = malloc(0x5);
+	memset(s[4], 'a', 0x5);
 	s[5] = malloc(0x2d);
+	memset(s[5], 'a', 0x2d);
 	s[6] = malloc(0x2d);
+	memset(s[6], 'a', 0x2d);
 	s[7] = malloc(0x48);
+	memset(s[7], 'a', 0x48);
 	s[8] = malloc(0x28);
+	memset(s[7], 'a', 0x28);
 /*	s[9] = malloc(0x78);
 	s[10] = malloc(0xa8);
 	s[11] = malloc(0x68);
 	s[12] = malloc(0x50);
 	s[13] = malloc(0xc0);
 	s[14] = malloc(0x6); */
-	for (int i = 0; i < 14; i++)
+/*	for (int i = 0; i < 14; i++)
 		free(s[i]);
 	s[0] = malloc(1457664);
 	printf("got %p\n", s[0]);
@@ -55,5 +65,5 @@ int				main(void)
 	}
 	for (int i = 512; i < 1024; i++)
 	  	free(s[i]);
-	return (0);
+	return (0); */
 }
