@@ -9,8 +9,17 @@ void		*find_free_chk(t_chk_hdr *free_chk, size_t size)
 	free_chk = free_chk->nxt;
 	while (free_chk && free_chk->size < size)
 		free_chk = free_chk->nxt;
+//	if (free_chk)
+//		printf("found a free chk of size %x\n", free_chk->size);
 	if (free_chk)
-		printf("found a free chk of size %x\n", free_chk->size);
+	{
+		if (free_chk->prv)
+			free_chk->prv->nxt = free_chk->nxt;
+		if (free_chk->nxt)
+			free_chk->nxt->prv = free_chk->prv;
+		free_chk->nxt = NULL;
+		free_chk->prv = NULL;
+	}
 	return (free_chk);
 }
 
@@ -23,10 +32,11 @@ void			*heap_new_page(t_chk_hdr **wilderness, size_t size)
 	size = (size / PAGE_SIZE + 1) * PAGE_SIZE;
 	if ((chk = sbrk(size)) == (void *)-1)
 		return (NULL);
-	printf("LIMIT: %p\n", chk);
 	heap = (void *)((uintptr_t)sbrk(0) - HEAP_HDR_SZ);
 	if (!*wilderness)
 		heap->size = 0;
+	else
+		heap->size = ((t_heap_hdr *)((uintptr_t)chk - HEAP_HDR_SZ))->size;
 	heap->size += size;
 	chk = (void *)((uintptr_t)heap - CHK_HDR_SZ);
 	chk->size = size;
@@ -52,8 +62,8 @@ void			*wild_split(t_chk_hdr *wilderness, size_t size)
 	if (size + CHK_WILD_OFF >= wilderness->size)
 		return (NULL);
 //	printf("SIZE %x %x TOTAL %x\n", size + CHK_WILD_OFF, wilderness->size, tsize);
-	chk = (t_chk_hdr *)((size_t)((uintptr_t)wilderness)
-						- wilderness->size + CHK_WILD_OFF);
+	chk = (t_chk_hdr *)((uintptr_t)wilderness + CHK_WILD_OFF
+						- wilderness->size);
 	tsize += size;
 	wilderness->size -= size;
 	chk->size = size;
@@ -71,7 +81,7 @@ void					*malloc(size_t size)
 
 	if (!size)
 		return (NULL);
-//	printf("Mallocing size %x\n", size);
+	printf("Mallocing size %x\n", size);
 	if (wilderness && (chk = find_free_chk(wilderness->prv, size)))
 		;
 	else if (wilderness && (chk = wild_split(wilderness, size)))
@@ -81,5 +91,6 @@ void					*malloc(size_t size)
 //	printf("CHK %p %x %x\n", chk, chk->size, wilderness->size);
 //	printf("CHK %p\n", (uintptr_t)chk + CHK_HDR_SZ);
 	assert(!((uintptr_t)chk % ALIGN_SIZE));
+	show_alloc_mem();
 	return ((void *)((uintptr_t)chk + CHK_HDR_SZ));
 }
