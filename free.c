@@ -7,18 +7,14 @@ void				free(void *ptr)
 
 	if (!ptr)
 		return ;
+//	printf("freeing %p\n", ptr);
 	chk = (void *)((uintptr_t)ptr - CHK_HDR_SZ);
-	if ((freed = g_arena.top->nxt))
-	{
-		while (freed->nxt)
-			freed = freed->nxt;
-		freed->nxt = chk;
-		chk->prv = freed;
-	}
-	else
-	{
-		g_arena.top->nxt = chk;
-		chk->prv = g_arena.top;
-	}
+	freed = g_arena.top;
+	while (freed->nxt)
+		freed = freed->nxt;
+	freed->nxt = chk;
+	chk->prv = freed;
 	chk->nxt = (void *)0;
+//	if (ptr == 0x422c608)
+//		show_alloc_mem();
 }

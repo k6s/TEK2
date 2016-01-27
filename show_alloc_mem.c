@@ -18,4 +18,12 @@ void				show_alloc_mem(void)
 			chk = (uintptr_t)chk + chk->size;
 		}
 	}
+	chk = g_arena.top->nxt;
+	printf("Free Bins List:\n");
+	while (chk)
+	{
+		printf("0x%04x - 0x%04x: 0x%04x\n", (uintptr_t)chk + CHK_HDR_SZ,
+			   (uintptr_t)chk + chk->size, chk->size);
+		chk = chk->nxt;
+	}
 }

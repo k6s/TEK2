@@ -16,6 +16,7 @@ void		*find_free_chk(t_chk_hdr *free_chk, size_t size)
 			free_chk->nxt->prv = free_chk->prv;
 		free_chk->nxt = NULL;
 		free_chk->prv = NULL;
+//		printf("from free bins list\n");
 	}
 	return (free_chk);
 }
@@ -42,7 +43,8 @@ void			*heap_new_page(size_t size)
 	if (g_arena.top)
 	{
 		new_arena.top->size += g_arena.top->size;
-		new_arena.top->nxt = g_arena.top->nxt;
+		if ((new_arena.top->nxt = g_arena.top->nxt))
+			g_arena.top->nxt->prv = new_arena.top;
 		new_arena.top->prv = NULL;
 	}
 	memcpy(&g_arena, &new_arena, HEAP_HDR_SZ);
@@ -80,6 +82,8 @@ void					*malloc(size_t size)
 	else if ((chk = heap_new_page(size)))
 		chk = wild_split(size);
 	assert(!((uintptr_t)chk % ALIGN_SIZE));
+//	printf("malloc %x %p - %x left\n", size, (uintptr_t)chk + CHK_HDR_SZ, g_arena.top->size);
+//	if ((uintptr_t)chk + CHK_HDR_SZ ==  0x422c608)
 //	show_alloc_mem();
 	return ((void *)((uintptr_t)chk + CHK_HDR_SZ));
 }
