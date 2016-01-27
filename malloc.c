@@ -1,11 +1,11 @@
 #include "malloc.h"
 #include <stdio.h>
 
+t_heap_hdr	g_arena;
+
 void		*find_free_chk(t_chk_hdr *free_chk, size_t size)
 {
 	size = ALIGN(size + CHK_HDR_SZ);
-	free_chk = (t_chk_hdr *)((uintptr_t)sbrk(0) - CHK_WILD_OFF);
-	free_chk = free_chk->nxt;
 	while (free_chk && free_chk->size < size)
 		free_chk = free_chk->nxt;
 	if (free_chk)
@@ -20,47 +20,45 @@ void		*find_free_chk(t_chk_hdr *free_chk, size_t size)
 	return (free_chk);
 }
 
-void			*heap_new_page(t_chk_hdr **wilderness, size_t size)
+void			*heap_new_page(size_t size)
 {
 	t_chk_hdr	*chk;
-	t_heap_hdr	*heap;
+	t_heap_hdr	new_arena;
 
 	size = (size / PAGE_SIZE + 1) * PAGE_SIZE;
 	if ((chk = sbrk(size)) == (void *)-1)
 		return (NULL);
-	heap = (void *)((uintptr_t)sbrk(0) - HEAP_HDR_SZ);
-	if (!*wilderness)
-		heap->size = 0;
+	if ((new_arena.top = sbrk(0)) == (void *)-1)
+		return (NULL);
+	new_arena.top = (void *)((uintptr_t)new_arena.top - CHK_HDR_SZ);
+	if (!g_arena.top)
+		new_arena.size = 0;
 	else
-		heap->size = ((t_heap_hdr *)((uintptr_t)chk - HEAP_HDR_SZ))->size;
-	heap->size += size;
-	chk = (void *)((uintptr_t)heap - CHK_HDR_SZ);
-	chk->size = size;
-	chk->nxt = (void *)0;
-	chk->prv = (void *)0;
-	if (*wilderness)
+		new_arena.size = g_arena.size;
+	new_arena.size += size;
+	new_arena.top->size = size;
+	new_arena.top->nxt = (void *)0;
+	new_arena.top->prv = (void *)0;
+	if (g_arena.top)
 	{
-		chk->size += (*wilderness)->size;
-		chk->nxt = (*wilderness)->nxt;
-		chk->prv = NULL;
+		new_arena.top->size += g_arena.top->size;
+		new_arena.top->nxt = g_arena.top->nxt;
+		new_arena.top->prv = NULL;
 	}
-	*wilderness = chk;
-	return (chk);
+	memcpy(&g_arena, &new_arena, HEAP_HDR_SZ);
+	return (new_arena.top);
 }
 
-void			*wild_split(t_chk_hdr *wilderness, size_t size)
+void			*wild_split(size_t size)
 {
 	t_chk_hdr	*chk;
-	static size_t	tsize = 0;
 
-	wilderness = (t_chk_hdr *)((uintptr_t)sbrk(0) - CHK_WILD_OFF);
 	size = ALIGN(size + CHK_HDR_SZ);
-	if (size + CHK_WILD_OFF >= wilderness->size)
+	if (size + CHK_HDR_SZ >= g_arena.top->size)
 		return (NULL);
-	chk = (t_chk_hdr *)((uintptr_t)wilderness + CHK_WILD_OFF
-						- wilderness->size);
-	tsize += size;
-	wilderness->size -= size;
+	chk = (t_chk_hdr *)((uintptr_t)g_arena.top + CHK_HDR_SZ
+						- g_arena.top->size);
+	g_arena.top->size -= size;
 	chk->size = size;
 	chk->prv = (void *)0;
 	chk->nxt = (void *)0;
@@ -71,17 +69,16 @@ void			*wild_split(t_chk_hdr *wilderness, size_t size)
 
 void					*malloc(size_t size)
 {
-	static t_chk_hdr	*wilderness = NULL;
 	t_chk_hdr			*chk = NULL;
 
 	if (!size)
 		return (NULL);
-	if (wilderness && (chk = find_free_chk(wilderness->prv, size)))
+	if (g_arena.top && (chk = find_free_chk(g_arena.top->nxt, size)))
 		;
-	else if (wilderness && (chk = wild_split(wilderness, size)))
+	else if (g_arena.top && (chk = wild_split(size)))
 		;
-	else if ((chk = heap_new_page(&wilderness, size)))
-		chk = wild_split(chk, size);
+	else if ((chk = heap_new_page(size)))
+		chk = wild_split(size);
 	assert(!((uintptr_t)chk % ALIGN_SIZE));
 //	show_alloc_mem();
 	return ((void *)((uintptr_t)chk + CHK_HDR_SZ));

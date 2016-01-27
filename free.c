@@ -2,15 +2,13 @@
 
 void				free(void *ptr)
 {
-	t_chk_hdr		*wilderness;
 	t_chk_hdr		*chk;
 	t_chk_hdr		*freed;
 
 	if (!ptr)
 		return ;
-	chk = (t_chk_hdr *)((uintptr_t)ptr - CHK_HDR_SZ);
-	wilderness = (t_chk_hdr *)((uintptr_t)sbrk(0) - CHK_WILD_OFF);
-	if ((freed = wilderness->nxt))
+	chk = (void *)((uintptr_t)ptr - CHK_HDR_SZ);
+	if ((freed = g_arena.top->nxt))
 	{
 		while (freed->nxt)
 			freed = freed->nxt;
@@ -19,8 +17,8 @@ void				free(void *ptr)
 	}
 	else
 	{
-		wilderness->nxt = chk;
-		chk->prv = wilderness;
+		g_arena.top->nxt = chk;
+		chk->prv = g_arena.top;
 	}
 	chk->nxt = (void *)0;
 }
