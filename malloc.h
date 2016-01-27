@@ -33,4 +33,7 @@ struct			s_chk_hdr
 # define CHK_HDR_SZ			sizeof(t_chk_hdr)
 # define CHK_WILD_OFF		(CHK_HDR_SZ + HEAP_HDR_SZ)
 
+void	*malloc(size_t size);
+void	free(void *ptr);
+
 #endif

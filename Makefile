@@ -5,7 +5,7 @@
 ## Login   <faure-_l@epitech.net>
 ## 
 ## Started on  Tue Jan 26 00:39:58 2016 Loïk Fauré-Berlinguette
-## Last update Tue Jan 26 01:12:57 2016 Loïk Fauré-Berlinguette
+## Last update Wed Jan 27 11:17:48 2016 Loïk Fauré-Berlinguette
 ##
 
 CC	= gcc
@@ -25,7 +25,7 @@ OBJS	= $(SRCS:.c=.o)
 all:	$(NAME)
 
 $(NAME): $(OBJS)
-	$(CC) $(OBJS) -o $(NAME) -shared
+	$(CC) $(OBJS) -o $(NAME) $(LDFLAGS)
 
 %.o:%.c
 	$(CC) $(CFLAGS) -o $@ $< -c -ggdb
