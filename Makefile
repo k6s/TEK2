@@ -18,7 +18,7 @@ LDFLAGS = -shared
 
 NAME	= libmy_malloc.so
 
-SRCS	= malloc.c free.c
+SRCS	= malloc.c free.c show_alloc_mem.c
 
 OBJS	= $(SRCS:.c=.o)
 
