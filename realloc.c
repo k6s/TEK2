@@ -5,6 +5,7 @@ void		*realloc(void *ptr, size_t size)
 {
   void 		*new_ptr;
   t_chk_hdr	*chk;
+  size_t	old_size;
 
   if (!ptr)
     return malloc(size);
@@ -13,10 +14,10 @@ void		*realloc(void *ptr, size_t size)
       free(ptr);
       return NULL;
     }
-  if (((t_chk_hdr *)((uintptr_t)ptr - CHK_HDR_SZ))->size == size)
+  if ((old_size = ((t_chk_hdr *)((uintptr_t)ptr - CHK_HDR_SZ))->size) == size)
     return (ptr);
   new_ptr = malloc(size);
-  memcpy(new_ptr, ptr, size);
+  memcpy(new_ptr, ptr, old_size);
   free(ptr);
   return (new_ptr);
 }
