@@ -44,9 +44,9 @@ static void		*heap_new_page(size_t size)
 	t_heap_hdr	new_arena;
 
 	size = (size / PAGE_SIZE + 1) * PAGE_SIZE;
-	if (!g_arena.top && size < 50 * PAGE_SIZE)
-		size = 50 * PAGE_SIZE;
-	if ((chk = sbrk(size)) == (void *)-1)
+	if (!g_arena.top && size < PAGE_CACHE * PAGE_SIZE)
+		size = PAGE_CACHE * PAGE_SIZE;
+	if (size < 1 || size > INTPTR_MAX || (chk = sbrk(size)) == (void *)-1)
 		return (NULL);
 	if ((new_arena.top = sbrk(0)) == (void *)-1)
 		return (NULL);
@@ -91,5 +91,5 @@ void					*malloc(size_t size)
 		chk = wild_split(size);
 	assert(!((uintptr_t)chk % ALIGN_SIZE));
 	pthread_mutex_unlock(&g_arena.lock);
-	return ((void *)((uintptr_t)chk + CHK_HDR_SZ));
+	return (chk ? (void *)((uintptr_t)chk + CHK_HDR_SZ) : NULL);
 }

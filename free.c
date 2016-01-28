@@ -1,13 +1,13 @@
 #include "malloc.h"
 
-void				double_free(void *ptr)
+static void			double_free(void *ptr)
 {
 	fprintf(stderr, "*** Error: free(): Double free or corruption %p ***\n",
 			ptr);
 	abort();
 }
 
-int					is_ptr_valid(t_chk_hdr *ptr)
+static int			is_ptr_valid(t_chk_hdr *ptr)
 {
 	if (IS_DISALIGNED((uintptr_t)ptr)
 		|| ptr->size < 20 || ptr->size + CHK_HDR_SZ > g_arena.size)

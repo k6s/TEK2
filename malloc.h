@@ -12,6 +12,9 @@
 # ifndef PAGE_SIZE
 #  define PAGE_SIZE			((unsigned)getpagesize())
 # endif
+
+# define PAGE_CACHE			64
+
 # define ALIGN_SIZE			__alignof__(unsigned long long)
 # define IS_DISALIGNED(x)	((x) % ALIGN_SIZE)
 # define DO_ALIGN(x)		((x) + ALIGN_SIZE - ((x) % ALIGN_SIZE))
