@@ -5,6 +5,8 @@
 # include <stdint.h>
 # include <linux/types.h>
 # include <pthread.h>
+# include <stdio.h>
+# include <stdlib.h>
 
 # ifndef PAGE_SIZE
 #  define PAGE_SIZE			((unsigned)getpagesize())
