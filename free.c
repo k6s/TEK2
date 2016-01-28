@@ -10,7 +10,7 @@ void				double_free(void *ptr)
 int					is_ptr_valid(t_chk_hdr *ptr)
 {
 	if (IS_DISALIGNED((uintptr_t)ptr)
-		|| ptr->size < 20 || ptr->size > g_arena.size)
+		|| ptr->size < 20 || ptr->size + CHK_HDR_SZ > g_arena.size)
 	{
 		fprintf(stderr, "*** Error: free(): Invalid pointer: %p ***\n",
 				ptr);
