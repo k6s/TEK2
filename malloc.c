@@ -1,9 +1,8 @@
 #include "malloc.h"
-#include <stdio.h>
 
-t_heap_hdr	g_arena;
+t_heap_hdr		g_arena;
 
-void		*find_free_chk(t_chk_hdr *free_chk, size_t size)
+static void		*find_free_chk(t_chk_hdr *free_chk, size_t size)
 {
 	size = ALIGN(size + CHK_HDR_SZ);
 	while (free_chk && free_chk->size < size)
@@ -16,12 +15,30 @@ void		*find_free_chk(t_chk_hdr *free_chk, size_t size)
 			free_chk->nxt->prv = free_chk->prv;
 		free_chk->nxt = NULL;
 		free_chk->prv = NULL;
-//		printf("from free bins list\n");
 	}
 	return (free_chk);
 }
 
-void			*heap_new_page(size_t size)
+static void				heap_set_hdr(t_heap_hdr *new_arena, size_t size)
+{
+	new_arena->size = size;
+	new_arena->top->size = size;
+	new_arena->top->nxt = (void *)0;
+	new_arena->top->prv = (void *)0;
+	if (g_arena.top)
+	{
+		new_arena->size += g_arena.size;
+		new_arena->top->size += g_arena.top->size;
+		if ((new_arena->top->nxt = g_arena.top->nxt))
+			new_arena->top->nxt->prv = new_arena->top;
+		new_arena->top->prv = NULL;
+	}
+	memcpy(&new_arena->lock, &g_arena.lock, sizeof(g_arena.lock));
+	new_arena->ilock = g_arena.ilock;
+	memcpy(&g_arena, new_arena, HEAP_HDR_SZ);
+}
+
+static void		*heap_new_page(size_t size)
 {
 	t_chk_hdr	*chk;
 	t_heap_hdr	new_arena;
@@ -34,28 +51,11 @@ void			*heap_new_page(size_t size)
 	if ((new_arena.top = sbrk(0)) == (void *)-1)
 		return (NULL);
 	new_arena.top = (void *)((uintptr_t)new_arena.top - CHK_HDR_SZ);
-	if (!g_arena.top)
-		new_arena.size = 0;
-	else
-		new_arena.size = g_arena.size;
-	new_arena.size += size;
-	new_arena.top->size = size;
-	new_arena.top->nxt = (void *)0;
-	new_arena.top->prv = (void *)0;
-	if (g_arena.top)
-	{
-		new_arena.top->size += g_arena.top->size;
-		if ((new_arena.top->nxt = g_arena.top->nxt))
-			new_arena.top->nxt->prv = new_arena.top;
-		new_arena.top->prv = NULL;
-		memcpy(&new_arena.lock, &g_arena.lock, sizeof(g_arena.lock));
-		new_arena.ilock = g_arena.ilock;
-	}
-	memcpy(&g_arena, &new_arena, HEAP_HDR_SZ);
+	heap_set_hdr(&new_arena, size);
 	return (new_arena.top);
 }
 
-void			*wild_split(size_t size)
+static void		*wild_split(size_t size)
 {
 	t_chk_hdr	*chk;
 

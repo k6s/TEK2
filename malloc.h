@@ -7,6 +7,7 @@
 # include <pthread.h>
 # include <stdio.h>
 # include <stdlib.h>
+# include <string.h>
 
 # ifndef PAGE_SIZE
 #  define PAGE_SIZE			((unsigned)getpagesize())
