@@ -46,6 +46,8 @@ void			*heap_new_page(size_t size)
 		if ((new_arena.top->nxt = g_arena.top->nxt))
 			new_arena.top->nxt->prv = new_arena.top;
 		new_arena.top->prv = NULL;
+		memcpy(&new_arena.lock, &g_arena.lock, sizeof(g_arena.lock));
+		new_arena.ilock = g_arena.ilock;
 	}
 	memcpy(&g_arena, &new_arena, HEAP_HDR_SZ);
 	return (new_arena.top);
@@ -75,6 +77,10 @@ void					*malloc(size_t size)
 
 	if (!size)
 		return (NULL);
+	if (!g_arena.ilock && (g_arena.ilock = 1)
+	   	&& pthread_mutex_init(&g_arena.lock, NULL))
+			return (NULL);
+	pthread_mutex_lock(&g_arena.lock);
 	if (g_arena.top && (chk = find_free_chk(g_arena.top->nxt, size)))
 		;
 	else if (g_arena.top && (chk = wild_split(size)))
@@ -82,8 +88,6 @@ void					*malloc(size_t size)
 	else if ((chk = heap_new_page(size)))
 		chk = wild_split(size);
 	assert(!((uintptr_t)chk % ALIGN_SIZE));
-//	printf("malloc %x %p - %x left\n", size, (uintptr_t)chk + CHK_HDR_SZ, g_arena.top->size);
-//	if ((uintptr_t)chk + CHK_HDR_SZ ==  0x422c608)
-//	show_alloc_mem();
+	pthread_mutex_unlock(&g_arena.lock);
 	return ((void *)((uintptr_t)chk + CHK_HDR_SZ));
 }

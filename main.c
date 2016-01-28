@@ -75,26 +75,10 @@ int				main(void)
 		memset(s[1], 'a', 6);
 		memcpy(s[0], s[1], 6);
 	} */
-	s[0] = malloc(2);
-	show_alloc_mem();
-	s[1] = malloc(5);
-	show_alloc_mem();
-	free(s[0]);
-	show_alloc_mem();
-	free(s[1]);
-	show_alloc_mem();
-	s[0] = malloc(2);
-	show_alloc_mem();
-	s[1] = malloc(5);
-	s[2] = malloc(20);
-	s[3] = malloc(30);
+	s[0] = malloc(4096);
+	memset(s[0], 'a', 4096);
 	show_alloc_mem();
 	free(s[0]);
-	free(s[2]);
-	free(s[3]);
-	free(s[1]);
-	s[1] = malloc(5);
 	show_alloc_mem();
-	free(s[1]);
 	return (0);
 }

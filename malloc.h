@@ -4,6 +4,7 @@
 # include <unistd.h>
 # include <stdint.h>
 # include <linux/types.h>
+# include <pthread.h>
 
 # ifndef PAGE_SIZE
 #  define PAGE_SIZE			((unsigned)getpagesize())
@@ -16,10 +17,12 @@
 typedef struct s_chk_hdr		t_chk_hdr;
 typedef struct s_heap_hdr		t_heap_hdr;
 
-struct			s_heap_hdr
+struct				s_heap_hdr
 {
-	t_chk_hdr	*top;
-	size_t		size;
+	t_chk_hdr		*top;
+	size_t			size;
+	pthread_mutex_t	lock;
+	char			ilock;
 };
 
 # define HEAP_HDR_SZ		sizeof(t_heap_hdr)
