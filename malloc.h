@@ -8,6 +8,7 @@
 # include <stdio.h>
 # include <stdlib.h>
 # include <string.h>
+# include <stddef.h>
 
 # ifndef PAGE_SIZE
 #  define PAGE_SIZE			((unsigned)getpagesize())
@@ -29,6 +30,7 @@ struct				s_heap_hdr
 	size_t			size;
 	pthread_mutex_t	lock;
 	char			ilock;
+	size_t			top_un_sz;
 };
 
 # define HEAP_HDR_SZ		sizeof(t_heap_hdr)
@@ -42,7 +44,8 @@ struct			s_chk_hdr
 	t_chk_hdr	*prv;
 };
 
-# define CHK_HDR_SZ			sizeof(t_chk_hdr)
+# define CHK_HDR_SZ			((uintptr_t)offsetof(t_chk_hdr, nxt))
+# define BIN_HDR_SZ			sizeof(t_chk_hdr)
 
 void	show_alloc_mem(void);
 void	*malloc(size_t size);

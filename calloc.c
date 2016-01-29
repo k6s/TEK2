@@ -6,7 +6,7 @@ void				*calloc(size_t nmemb, size_t size)
 
 	if (!nmemb || !size)
 		return ((void *)0);
-	new = malloc(nmemb * size);
+	if (new = malloc(nmemb * size))
 	memset(new, 0, size * nmemb);
 	return (new);
 }

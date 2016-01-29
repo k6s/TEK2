@@ -19,7 +19,16 @@ static int			is_ptr_valid(t_chk_hdr *ptr)
 	}
 	return (0);
 }
-
+/*
+static int			arena_dealloc(size_t size)
+{
+	size = (size / PAGE_SIZE + 1) * PAGE_SIZE;
+	if (brk(g_arena.top + BIN_HDR_SZ - g_arena.size + size))
+		return (-1);
+	g_arena.top->
+	return (0);
+}
+*/
 void				free(void *ptr)
 {
 	t_chk_hdr		*chk;
@@ -29,7 +38,8 @@ void				free(void *ptr)
 		return ;
 	pthread_mutex_lock(&g_arena.lock);
 	chk = (void *)((uintptr_t)ptr - CHK_HDR_SZ);
-	if (!is_ptr_valid(chk))
+//	if (!is_ptr_valid(chk))
+	if (1)
 	{
 		freed = g_arena.top;
 		while (freed->nxt && freed->nxt != chk)
@@ -41,6 +51,14 @@ void				free(void *ptr)
 			freed->nxt = chk;
 			chk->prv = freed;
 			chk->nxt = (void *)0;
+/*			if ((uintptr_t)chk + chk->size == (uintptr_t)g_arena.top + BIN_HDR_SZ
+				- g_arena.top->size)
+			{
+				if ((g_arena.top_un_sz += chk->size) > PAGE_SIZE * PAGE_CACHE)
+					arena_resize(g_arena.size - (g_arena.top_un_sz)
+								 + PAGE_SIZE * PAGE_CACHE);
+				printf("Unused at top: %u\n", g_arena.top_un_sz);
+			} */
 		}
 	}
 	pthread_mutex_unlock(&g_arena.lock);

@@ -5,6 +5,7 @@ t_heap_hdr		g_arena;
 static void		*find_free_chk(t_chk_hdr *free_chk, size_t size)
 {
 	size = ALIGN(size + CHK_HDR_SZ);
+	size = size < BIN_HDR_SZ ? BIN_HDR_SZ : size;
 	while (free_chk && free_chk->size < size)
 		free_chk = free_chk->nxt;
 	if (free_chk)
@@ -15,6 +16,9 @@ static void		*find_free_chk(t_chk_hdr *free_chk, size_t size)
 			free_chk->nxt->prv = free_chk->prv;
 		free_chk->nxt = NULL;
 		free_chk->prv = NULL;
+		if ((uintptr_t)free_chk + free_chk->size
+			== (uintptr_t)g_arena.top + BIN_HDR_SZ - g_arena.top->size)
+			g_arena.top_un_sz -= free_chk->size;
 	}
 	return (free_chk);
 }
@@ -33,6 +37,7 @@ static void				heap_set_hdr(t_heap_hdr *new_arena, size_t size)
 			new_arena->top->nxt->prv = new_arena->top;
 		new_arena->top->prv = NULL;
 	}
+	new_arena->top_un_sz = new_arena->top->size + g_arena.top_un_sz;
 	memcpy(&new_arena->lock, &g_arena.lock, sizeof(g_arena.lock));
 	new_arena->ilock = g_arena.ilock;
 	memcpy(&g_arena, new_arena, HEAP_HDR_SZ);
@@ -50,7 +55,7 @@ static void		*heap_new_page(size_t size)
 		return (NULL);
 	if ((new_arena.top = sbrk(0)) == (void *)-1)
 		return (NULL);
-	new_arena.top = (void *)((uintptr_t)new_arena.top - CHK_HDR_SZ);
+	new_arena.top = (void *)((uintptr_t)new_arena.top - BIN_HDR_SZ);
 	heap_set_hdr(&new_arena, size);
 	return (new_arena.top);
 }
@@ -60,11 +65,13 @@ static void		*wild_split(size_t size)
 	t_chk_hdr	*chk;
 
 	size = ALIGN(size + CHK_HDR_SZ);
-	if (size + CHK_HDR_SZ >= g_arena.top->size)
+	size = size < BIN_HDR_SZ ? BIN_HDR_SZ : size;
+	if (size + BIN_HDR_SZ >= g_arena.top->size)
 		return (NULL);
-	chk = (t_chk_hdr *)((uintptr_t)g_arena.top + CHK_HDR_SZ
+	chk = (t_chk_hdr *)((uintptr_t)g_arena.top + BIN_HDR_SZ
 						- g_arena.top->size);
 	g_arena.top->size -= size;
+	g_arena.top_un_sz -= size;
 	chk->size = size;
 	chk->prv = (void *)0;
 	chk->nxt = (void *)0;
