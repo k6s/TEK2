@@ -5,24 +5,28 @@ void				show_alloc_mem(void)
 	t_chk_hdr		*chk;
 	size_t			sz = 0;
 
-	printf("break : 0x%04x\n", sbrk(0));
+	printf("break : 0x%04lx\n", (uintptr_t)sbrk(0));
 	if (g_arena.top)
 	{
 		sz += g_arena.top->size;
-		chk = (void *)((uintptr_t)g_arena.top + CHK_HDR_SZ - g_arena.size);
+		chk = (void *)((uintptr_t)g_arena.top + BIN_HDR_SZ);
 		while (sz < g_arena.size)
 		{
-			printf("0x%04x - 0x%04x: 0x%04x\n", (uintptr_t)chk + CHK_HDR_SZ,
-				   (uintptr_t)chk + chk->size, chk->size);
+			printf("0x%04lx - 0x%04lx: 0x%04lx\n", (uintptr_t)((uintptr_t)chk + CHK_HDR_SZ),
+				   (uintptr_t)((uintptr_t)chk + chk->size), chk->size);
 			sz += chk->size;
-			chk = (uintptr_t)chk + chk->size;
+			if (!chk->size && sz < g_arena.size)
+			{
+			printf("HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERE\n");
+				break;
 		}
-	}
+			chk = (void *)((uintptr_t)chk + chk->size);
+	}}
 	chk = g_arena.top->nxt;
-	printf("Free Bins List:\n");
+	printf("Free Bins List: %p\n", g_arena.top->nxt);
 	while (chk)
 	{
-		printf("0x%04x - 0x%04x: 0x%04x\n", (uintptr_t)chk + CHK_HDR_SZ,
+		printf("0x%04lx - 0x%04lx: 0x%04lx\n", (uintptr_t)chk + BIN_HDR_SZ,
 			   (uintptr_t)chk + chk->size, chk->size);
 		chk = chk->nxt;
 	}

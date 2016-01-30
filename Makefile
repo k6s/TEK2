@@ -25,7 +25,7 @@ OBJS	= $(SRCS:.c=.o)
 all:	$(NAME)
 
 $(NAME): $(OBJS)
-	$(CC) $(OBJS) -o $(NAME) -shared -lpthread
+	$(CC) $(OBJS) -o $(NAME) -shared -lpthread -ggdb
 
 %.o:%.c
 	$(CC) $(CFLAGS) -o $@ $< -c -ggdb

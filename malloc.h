@@ -22,9 +22,9 @@
 # define ALIGN(x)			(IS_DISALIGNED(x) ? DO_ALIGN(x) : (x))
 
 typedef struct s_chk_hdr		t_chk_hdr;
-typedef struct s_heap_hdr		t_heap_hdr;
+typedef struct s_arena_hdr		t_arena_hdr;
 
-struct				s_heap_hdr
+struct				s_arena_hdr
 {
 	t_chk_hdr		*top;
 	size_t			size;
@@ -33,9 +33,9 @@ struct				s_heap_hdr
 	size_t			top_un_sz;
 };
 
-# define HEAP_HDR_SZ		sizeof(t_heap_hdr)
+# define HEAP_HDR_SZ		sizeof(t_arena_hdr)
 
-extern t_heap_hdr				g_arena;
+extern t_arena_hdr				g_arena;
 
 struct			s_chk_hdr
 {

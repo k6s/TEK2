@@ -4,7 +4,6 @@
 void		*realloc(void *ptr, size_t size)
 {
   void 		*new_ptr;
-  t_chk_hdr	*chk;
   size_t	old_size;
   
   if (!ptr)

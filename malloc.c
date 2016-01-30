@@ -1,11 +1,17 @@
 #include "malloc.h"
 
-t_heap_hdr		g_arena;
+t_arena_hdr		g_arena;
+
+static size_t	calc_chk_size(size_t size)
+{
+	size = ALIGN(size + BIN_HDR_SZ);
+	if (size < BIN_HDR_SZ)
+		size = ALIGN(BIN_HDR_SZ);
+	return (size);
+}
 
 static void		*find_free_chk(t_chk_hdr *free_chk, size_t size)
 {
-	size = ALIGN(size + CHK_HDR_SZ);
-	size = size < BIN_HDR_SZ ? BIN_HDR_SZ : size;
 	while (free_chk && free_chk->size < size)
 		free_chk = free_chk->nxt;
 	if (free_chk)
@@ -23,40 +29,33 @@ static void		*find_free_chk(t_chk_hdr *free_chk, size_t size)
 	return (free_chk);
 }
 
-static void				heap_set_hdr(t_heap_hdr *new_arena, size_t size)
+static void				arena_set_hdr(t_arena_hdr *new_arena, size_t size)
 {
-	new_arena->size = size;
-	new_arena->top->size = size;
-	new_arena->top->nxt = (void *)0;
-	new_arena->top->prv = (void *)0;
-	if (g_arena.top)
+	if (!g_arena.top)
 	{
-		new_arena->size += g_arena.size;
-		new_arena->top->size += g_arena.top->size;
-		if ((new_arena->top->nxt = g_arena.top->nxt))
-			new_arena->top->nxt->prv = new_arena->top;
+		new_arena->top->size = 0;
+		new_arena->top->nxt = NULL;
 		new_arena->top->prv = NULL;
+		g_arena.top = new_arena->top;
 	}
-	new_arena->top_un_sz = new_arena->top->size + g_arena.top_un_sz;
-	memcpy(&new_arena->lock, &g_arena.lock, sizeof(g_arena.lock));
-	new_arena->ilock = g_arena.ilock;
-	memcpy(&g_arena, new_arena, HEAP_HDR_SZ);
+	g_arena.top->size += size;
+	g_arena.size += size;
 }
 
-static void		*heap_new_page(size_t size)
+static void		*arena_new_page(size_t size)
 {
 	t_chk_hdr	*chk;
-	t_heap_hdr	new_arena;
+	t_arena_hdr	new_arena;
 
 	size = (size / PAGE_SIZE + 1) * PAGE_SIZE;
-	if (!g_arena.top && size < PAGE_CACHE * PAGE_SIZE)
+	if (size < PAGE_CACHE * PAGE_SIZE)
 		size = PAGE_CACHE * PAGE_SIZE;
 	if (size < 1 || size > INTPTR_MAX || (chk = sbrk(size)) == (void *)-1)
 		return (NULL);
 	if ((new_arena.top = sbrk(0)) == (void *)-1)
 		return (NULL);
-	new_arena.top = (void *)((uintptr_t)new_arena.top - BIN_HDR_SZ);
-	heap_set_hdr(&new_arena, size);
+	new_arena.top = (void *)((uintptr_t)new_arena.top - g_arena.size - size);
+	arena_set_hdr(&new_arena, size);
 	return (new_arena.top);
 }
 
@@ -64,11 +63,9 @@ static void		*wild_split(size_t size)
 {
 	t_chk_hdr	*chk;
 
-	size = ALIGN(size + CHK_HDR_SZ);
-	size = size < BIN_HDR_SZ ? BIN_HDR_SZ : size;
 	if (size + BIN_HDR_SZ >= g_arena.top->size)
 		return (NULL);
-	chk = (t_chk_hdr *)((uintptr_t)g_arena.top + BIN_HDR_SZ
+	chk = (t_chk_hdr *)((uintptr_t)g_arena.top + g_arena.size + BIN_HDR_SZ
 						- g_arena.top->size);
 	g_arena.top->size -= size;
 	g_arena.top_un_sz -= size;
@@ -86,6 +83,7 @@ void					*malloc(size_t size)
 
 	if (!size)
 		return (NULL);
+	size = calc_chk_size(size);
 	if (!g_arena.ilock && (g_arena.ilock = 1)
 	   	&& pthread_mutex_init(&g_arena.lock, NULL))
 			return (NULL);
@@ -94,9 +92,9 @@ void					*malloc(size_t size)
 		;
 	else if (g_arena.top && (chk = wild_split(size)))
 		;
-	else if ((chk = heap_new_page(size)))
+	else if ((chk = arena_new_page(size)))
 		chk = wild_split(size);
 	assert(!((uintptr_t)chk % ALIGN_SIZE));
 	pthread_mutex_unlock(&g_arena.lock);
-	return (chk ? (void *)((uintptr_t)chk + CHK_HDR_SZ) : NULL);
+	return (chk ? (void *)((uintptr_t)chk + BIN_HDR_SZ) : NULL);
 }
