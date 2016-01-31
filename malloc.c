@@ -4,29 +4,18 @@ t_arena_hdr		g_arena;
 
 static size_t	calc_chk_size(size_t size)
 {
-	size_t		orig = size;
 	size = ALIGN(size + BIN_HDR_SZ);
 	if (size < BIN_HDR_SZ)
 		size = ALIGN(BIN_HDR_SZ);
-	if (size < orig)
-	{
-		printf("Orig %x size %x\n", orig, size);
-		abort();
-	}
 	return (size);
 }
 
 static void		*find_free_chk(t_chk_hdr *free_chk, size_t size)
 {
-	printf("\n");
 	while (free_chk && free_chk->size < size)
-	{
-		printf("%p %lx doesn't suit\n", free_chk, free_chk->size);
 		free_chk = free_chk->nxt;
-	}
 	if (free_chk)
 	{
-		printf("%p %lx does\n", free_chk, free_chk->size);
 		if (free_chk->prv)
 			free_chk->prv->nxt = free_chk->nxt;
 		if (free_chk->nxt)
@@ -65,13 +54,14 @@ static void		*arena_new_page(size_t size)
 		return (NULL);
 	if ((new_arena.top = sbrk(0)) == (void *)-1)
 		return (NULL);
-	new_arena.top = (void *)((uintptr_t)new_arena.top - g_arena.size - size);
-	if (g_arena.top && new_arena.top != g_arena.top)
+	new_arena.top = (uintptr_t)new_arena.top - g_arena.size - size;
+	if (g_arena.top && g_arena.top != new_arena.top)
 	{
-		printf("Wrong top chunk addr %p %p\n", new_arena.top, g_arena.top);
+		printf("g_arena: %p new_arena %p\n", g_arena.top, new_arena.top);
 		abort();
 	}
 	arena_set_hdr(&new_arena, size);
+	show_alloc_mem();
 	return (new_arena.top);
 }
 
@@ -96,11 +86,16 @@ static void		*wild_split(size_t size)
 void					*malloc(size_t size)
 {
 	t_chk_hdr			*chk = NULL;
+	size_t				old_size;
 
 	if (!size)
 		return (NULL);
-	printf("malloc size %x", size);
-	size = calc_chk_size(size);
+	old_size = size;
+	if ((size = calc_chk_size(size)) < old_size + BIN_HDR_SZ)
+	{
+		printf("sizes : %lx %lx\n", old_size, size);
+		abort();
+	}
 	if (!g_arena.ilock && (g_arena.ilock = 1)
 	   	&& pthread_mutex_init(&g_arena.lock, NULL))
 			return (NULL);
@@ -112,8 +107,7 @@ void					*malloc(size_t size)
 	else if ((chk = arena_new_page(size)))
 		chk = wild_split(size);
 	assert(!((uintptr_t)chk % ALIGN_SIZE));
-	printf(" %p\n", chk);
 	pthread_mutex_unlock(&g_arena.lock);
-/*	show_alloc_mem(); */
+	printf("CHK addr %p size %p old_size %p\n", chk + BIN_HDR_SZ, size, old_size);
 	return (chk ? (void *)((uintptr_t)chk + BIN_HDR_SZ) : NULL);
 }

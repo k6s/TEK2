@@ -33,7 +33,7 @@ struct				s_arena_hdr
 	size_t			top_un_sz;
 };
 
-# define HEAP_HDR_SZ		sizeof(t_arena_hdr)
+# define ARENA_HDR_SZ		sizeof(t_arena_hdr)
 
 extern t_arena_hdr				g_arena;
 

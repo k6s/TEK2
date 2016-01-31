@@ -5,7 +5,7 @@ void				show_alloc_mem(void)
 	t_chk_hdr		*chk;
 	size_t			sz = 0;
 
-	printf("break : 0x%04lx\n", (uintptr_t)sbrk(0));
+	printf("break : 0x%04lx %p\n", (uintptr_t)sbrk(0), g_arena.top);
 	if (g_arena.top)
 	{
 		sz += g_arena.top->size;
@@ -18,7 +18,7 @@ void				show_alloc_mem(void)
 			if (!chk->size && sz < g_arena.size)
 			{
 				printf("HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERE\n");
-				break;
+				break ;
 			}
 			chk = (void *)((uintptr_t)chk + chk->size);
 	}}
