@@ -2,7 +2,7 @@
 
 t_arena_hdr		g_arena;
 
-static size_t	calc_chk_size(size_t size)
+size_t			calc_chk_size(size_t size)
 {
 	size = ALIGN(size + BIN_HDR_SZ);
 	if (size < BIN_HDR_SZ)
@@ -33,7 +33,6 @@ static void				arena_set_hdr(t_arena_hdr *new_arena, size_t size)
 {
 	if (!g_arena.top)
 	{
-		printf("INIT\n");
 		g_arena.size = 0;
 		g_arena.top_un_sz = 0;
 		g_arena.top = new_arena->top;

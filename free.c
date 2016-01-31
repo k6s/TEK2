@@ -54,7 +54,6 @@ void				free(void *ptr)
 			freed->nxt = chk;
 			chk->prv = freed;
 			chk->nxt = (void *)0;
-			memset(ptr, 0x62, chk->size - BIN_HDR_SZ);
 		}
 	}
 	//show_alloc_mem();
