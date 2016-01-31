@@ -9,15 +9,16 @@ static void			double_free(void *ptr)
 
 static int			is_ptr_valid(t_chk_hdr *ptr)
 {
-/*	if (IS_DISALIGNED((uintptr_t)ptr)
+	if (IS_DISALIGNED((uintptr_t)ptr)
 		|| ptr->size < 20 || ptr->size + CHK_HDR_SZ > g_arena.size)
 	{
 		fprintf(stderr, "*** Error: free(): Invalid pointer: %p ***\n",
 				ptr);
 		printf("%x\n", ptr->size);
+		show_alloc_mem();
 		abort();
 		return (-1);
-	} */
+	}
 	return (0);
 }
 /*

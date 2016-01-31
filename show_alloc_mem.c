@@ -12,21 +12,21 @@ void				show_alloc_mem(void)
 		chk = (void *)((uintptr_t)g_arena.top + BIN_HDR_SZ);
 		while (sz < g_arena.size)
 		{
-			printf("0x%04lx - 0x%04lx: 0x%04lx\n", (uintptr_t)((uintptr_t)chk + CHK_HDR_SZ),
-				   (uintptr_t)((uintptr_t)chk + chk->size), chk->size);
+			printf("0x%p - 0x%p: 0x%04lx\n", chk,
+				   (uintptr_t)chk + chk->size, chk->size);
 			sz += chk->size;
 			if (!chk->size && sz < g_arena.size)
 			{
-			printf("HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERE\n");
+				printf("HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERE\n");
 				break;
-		}
+			}
 			chk = (void *)((uintptr_t)chk + chk->size);
 	}}
 	chk = g_arena.top->nxt;
 	printf("Free Bins List: %p\n", g_arena.top->nxt);
 	while (chk)
 	{
-		printf("0x%04lx - 0x%04lx: 0x%04lx\n", (uintptr_t)chk + BIN_HDR_SZ,
+		printf("0x%04lx - 0x%04lx: 0x%04lx\n", (uintptr_t)chk,
 			   (uintptr_t)chk + chk->size, chk->size);
 		chk = chk->nxt;
 	}
