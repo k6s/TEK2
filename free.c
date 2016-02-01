@@ -41,7 +41,6 @@ void				free(void *ptr)
 		return ;
 	pthread_mutex_lock(&g_arena.lock);
 	chk = (void *)((uintptr_t)ptr - BIN_HDR_SZ);
-	printf("free %p\n", ptr);
 	if (!is_ptr_valid(chk))
 	{
 		freed = g_arena.top;
@@ -56,6 +55,5 @@ void				free(void *ptr)
 			chk->nxt = (void *)0;
 		}
 	}
-	//show_alloc_mem();
 	pthread_mutex_unlock(&g_arena.lock);
 }
