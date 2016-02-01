@@ -48,6 +48,7 @@ struct			s_chk_hdr
 # define BIN_HDR_SZ			sizeof(t_chk_hdr)
 
 size_t	calc_chk_size(size_t size);
+int		chk_is_highest(t_chk_hdr *chk);
 
 void	show_alloc_mem(void);
 void	*malloc(size_t size);

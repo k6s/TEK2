@@ -10,6 +10,15 @@ size_t			calc_chk_size(size_t size)
 	return (size);
 }
 
+int				chk_is_highest(t_chk_hdr *chk)
+{
+	if ((uintptr_t)chk + chk->size
+		== (uintptr_t)g_arena.top + g_arena.size + BIN_HDR_SZ
+		- g_arena.top->size)
+		return (0);
+	return (-1);
+}
+
 static void		*find_free_chk(t_chk_hdr *free_chk, size_t size)
 {
 	while (free_chk && free_chk->size < size)
@@ -22,6 +31,8 @@ static void		*find_free_chk(t_chk_hdr *free_chk, size_t size)
 			free_chk->nxt->prv = free_chk->prv;
 		free_chk->nxt = NULL;
 		free_chk->prv = NULL;
+		if (!chk_is_highest(free_chk))
+			g_arena.top_un_sz -= free_chk->size;
 /*		if ((uintptr_t)free_chk + free_chk->size
 			== (uintptr_t)g_arena.top + BIN_HDR_SZ - g_arena.top->size)
 			g_arena.top_un_sz -= free_chk->size; */
@@ -75,7 +86,6 @@ static void		*wild_split(size_t size)
 	chk = (t_chk_hdr *)((uintptr_t)g_arena.top + g_arena.size + BIN_HDR_SZ
 						- g_arena.top->size);
 	g_arena.top->size -= size;
-	g_arena.top_un_sz -= size;
 	chk->size = size;
 	chk->prv = (void *)0;
 	chk->nxt = (void *)0;
