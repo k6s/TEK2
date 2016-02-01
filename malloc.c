@@ -33,10 +33,13 @@ static void				arena_set_hdr(t_arena_hdr *new_arena, size_t size)
 {
 	if (!g_arena.top)
 	{
-		new_arena->top->size = 0;
-		new_arena->top->nxt = NULL;
-		new_arena->top->prv = NULL;
+		printf("INIT\n");
+		g_arena.size = 0;
+		g_arena.top_un_sz = 0;
 		g_arena.top = new_arena->top;
+		g_arena.top->nxt = NULL;
+		g_arena.top->prv = NULL;
+		g_arena.top->size = 0;
 	}
 	g_arena.top->size += size;
 	g_arena.size += size;
@@ -48,8 +51,8 @@ static void		*arena_new_page(size_t size)
 	t_arena_hdr	new_arena;
 
 	size = (size / PAGE_SIZE + 1) * PAGE_SIZE;
-	if (size < PAGE_CACHE * PAGE_SIZE)
-		size = PAGE_CACHE * PAGE_SIZE;
+//	if (size < PAGE_CACHE * PAGE_SIZE)
+//		size = PAGE_CACHE * PAGE_SIZE;
 	if (size < 1 || size > INTPTR_MAX || (chk = sbrk(size)) == (void *)-1)
 		return (NULL);
 	if ((new_arena.top = sbrk(0)) == (void *)-1)
@@ -61,7 +64,6 @@ static void		*arena_new_page(size_t size)
 		abort();
 	}
 	arena_set_hdr(&new_arena, size);
-	show_alloc_mem();
 	return (new_arena.top);
 }
 
@@ -91,7 +93,8 @@ void					*malloc(size_t size)
 	if (!size)
 		return (NULL);
 	old_size = size;
-	if ((size = calc_chk_size(size)) < old_size + BIN_HDR_SZ)
+	size = calc_chk_size(size);
+	if(size < old_size + BIN_HDR_SZ)
 	{
 		printf("sizes : %lx %lx\n", old_size, size);
 		abort();
@@ -108,6 +111,5 @@ void					*malloc(size_t size)
 		chk = wild_split(size);
 	assert(!((uintptr_t)chk % ALIGN_SIZE));
 	pthread_mutex_unlock(&g_arena.lock);
-	printf("CHK addr %p size %p old_size %p\n", chk + BIN_HDR_SZ, size, old_size);
 	return (chk ? (void *)((uintptr_t)chk + BIN_HDR_SZ) : NULL);
 }

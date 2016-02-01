@@ -4,6 +4,7 @@ static void			double_free(void *ptr)
 {
 	fprintf(stderr, "*** Error: free(): Double free or corruption %p ***\n",
 			ptr);
+	show_alloc_mem();
 	abort();
 }
 
@@ -15,7 +16,7 @@ static int			is_ptr_valid(t_chk_hdr *ptr)
 		fprintf(stderr, "*** Error: free(): Invalid pointer: %p ***\n",
 				ptr);
 		printf("%x\n", ptr->size);
-		show_alloc_mem();
+		//show_alloc_mem();
 		abort();
 		return (-1);
 	}
@@ -40,6 +41,7 @@ void				free(void *ptr)
 		return ;
 	pthread_mutex_lock(&g_arena.lock);
 	chk = (void *)((uintptr_t)ptr - BIN_HDR_SZ);
+	printf("free %p\n", ptr);
 	if (!is_ptr_valid(chk))
 	{
 		freed = g_arena.top;
@@ -52,15 +54,9 @@ void				free(void *ptr)
 			freed->nxt = chk;
 			chk->prv = freed;
 			chk->nxt = (void *)0;
-	/*		if ((uintptr_t)chk + chk->size == (uintptr_t)g_arena.top + BIN_HDR_SZ
-				- g_arena.top->size)
-			{
-				if ((g_arena.top_un_sz += chk->size) > PAGE_SIZE * PAGE_CACHE)
-			//		arena_resize(g_arena.size - (g_arena.top_un_sz)
-			//					 + PAGE_SIZE * PAGE_CACHE);
-				printf("Unused at top: %u\n", g_arena.top_un_sz);
-	 		} */
+			memset(ptr, 0x62, chk->size - BIN_HDR_SZ);
 		}
 	}
+	//show_alloc_mem();
 	pthread_mutex_unlock(&g_arena.lock);
 }
