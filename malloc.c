@@ -4,7 +4,7 @@ t_arena_hdr		g_arena;
 
 size_t			calc_chk_size(size_t size)
 {
-	size = ALIGN(size + BIN_HDR_SZ);
+	size = ALIGN(size + CHK_HDR_SZ);
 	if (size < BIN_HDR_SZ)
 		size = ALIGN(BIN_HDR_SZ);
 	return (size);
@@ -93,7 +93,7 @@ void					*malloc(size_t size)
 		return (NULL);
 	old_size = size;
 	size = calc_chk_size(size);
-	if(size < old_size + BIN_HDR_SZ || size < BIN_HDR_SZ)
+	if(size < old_size + CHK_HDR_SZ || size < BIN_HDR_SZ)
 	{
 		printf("sizes : %lx %lx\n", old_size, size);
 		abort();
@@ -110,5 +110,5 @@ void					*malloc(size_t size)
 		chk = wild_split(size);
 	assert(!((uintptr_t)chk % ALIGN_SIZE));
 	pthread_mutex_unlock(&g_arena.lock);
-	return (chk ? (void *)((uintptr_t)chk + BIN_HDR_SZ) : NULL);
+	return (chk ? (void *)((uintptr_t)chk + CHK_HDR_SZ) : NULL);
 }

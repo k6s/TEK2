@@ -38,7 +38,7 @@ void				free(void *ptr)
 	if (!ptr)
 		return ;
 	pthread_mutex_lock(&g_arena.lock);
-	chk = (void *)((uintptr_t)ptr - BIN_HDR_SZ);
+	chk = (void *)((uintptr_t)ptr - CHK_HDR_SZ);
 	if (!is_ptr_valid(chk))
 	{
 		freed = g_arena.top;

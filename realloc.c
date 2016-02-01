@@ -13,7 +13,7 @@ void		*realloc(void *ptr, size_t size)
       free(ptr);
       return NULL;
     }
-  old_size = ((t_chk_hdr *)((uintptr_t)ptr - BIN_HDR_SZ))->size;
+  old_size = ((t_chk_hdr *)((uintptr_t)ptr - CHK_HDR_SZ))->size;
   if (old_size >= calc_chk_size(old_size))
     return (ptr);
   if ((new_ptr = malloc(size)))
