@@ -56,7 +56,7 @@ static void		*arena_new_page(size_t size)
 		return (NULL);
 	if ((new_arena.top = sbrk(0)) == (void *)-1)
 		return (NULL);
-	new_arena.top = (uintptr_t)new_arena.top - g_arena.size - size;
+	new_arena.top = (void *)((uintptr_t)new_arena.top - g_arena.size - size);
 	if (g_arena.top && g_arena.top != new_arena.top)
 	{
 		printf("g_arena: %p new_arena %p %lx\n", g_arena.top, new_arena.top, size);

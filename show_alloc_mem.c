@@ -12,12 +12,12 @@ void				show_alloc_mem(void)
 		chk = (void *)((uintptr_t)g_arena.top + BIN_HDR_SZ);
 		while (sz < g_arena.size)
 		{
-			printf("0x%p - 0x%p: 0x%04lx\n", chk,
+			printf("0x%lx - 0x%lx: 0x%04lx\n", (uintptr_t)chk,
 				   (uintptr_t)chk + chk->size, chk->size);
 			sz += chk->size;
-			if (!chk->size && sz < g_arena.size || chk->size > g_arena.size)
+			if (!(chk->size && sz < g_arena.size) || chk->size > g_arena.size)
 			{
-				printf("HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERE\n");
+				fprintf(stderr, "Err: Invalid next chunk\n");
 				abort();
 			}
 			chk = (void *)((uintptr_t)chk + chk->size);

@@ -15,8 +15,6 @@ static int			is_ptr_valid(t_chk_hdr *ptr)
 	{
 		fprintf(stderr, "*** Error: free(): Invalid pointer: %p ***\n",
 				ptr);
-		printf("%x\n", ptr->size);
-		//show_alloc_mem();
 		abort();
 		return (-1);
 	}

@@ -47,6 +47,8 @@ struct			s_chk_hdr
 # define CHK_HDR_SZ			((uintptr_t)offsetof(t_chk_hdr, nxt))
 # define BIN_HDR_SZ			sizeof(t_chk_hdr)
 
+size_t	calc_chk_size(size_t size);
+
 void	show_alloc_mem(void);
 void	*malloc(size_t size);
 void	free(void *ptr);
