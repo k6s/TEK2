@@ -10,7 +10,7 @@ size_t			calc_chk_size(size_t size)
 	return (size);
 }
 
-int				chk_is_highest(t_chk_hdr *chk)
+int			chk_is_highest(t_chk_hdr *chk)
 {
 	if ((uintptr_t)chk + chk->size
 		== (uintptr_t)g_arena.top + g_arena.size + BIN_HDR_SZ
@@ -33,23 +33,18 @@ static void		*find_free_chk(t_chk_hdr *free_chk, size_t size)
 		free_chk->prv = NULL;
 		if (!chk_is_highest(free_chk))
 			g_arena.top_un_sz -= free_chk->size;
-/*		if ((uintptr_t)free_chk + free_chk->size
-			== (uintptr_t)g_arena.top + BIN_HDR_SZ - g_arena.top->size)
-			g_arena.top_un_sz -= free_chk->size; */
 	}
 	return (free_chk);
 }
 
-static void				arena_set_hdr(t_arena_hdr *new_arena, size_t size)
+static void		arena_set_hdr(t_arena_hdr *new_arena, size_t size)
 {
 	if (!g_arena.top)
 	{
 		g_arena.size = 0;
 		g_arena.top_un_sz = 0;
 		g_arena.top = new_arena->top;
-		g_arena.top->nxt = NULL;
-		g_arena.top->prv = NULL;
-		g_arena.top->size = 0;
+		memset(g_arena.top, 0, sizeof(*g_arena.top));
 	}
 	g_arena.top->size += size;
 	g_arena.size += size;
@@ -70,7 +65,7 @@ static void		*arena_new_page(size_t size)
 	new_arena.top = (void *)((uintptr_t)new_arena.top - g_arena.size - size);
 	if (g_arena.top && g_arena.top != new_arena.top)
 	{
-		printf("g_arena: %p new_arena %p %lx\n", g_arena.top, new_arena.top, size);
+		printf("*** Error: free(): Arena size corruption. Aborting... ***\n");
 		abort();
 	}
 	arena_set_hdr(&new_arena, size);
@@ -84,7 +79,7 @@ static void		*wild_split(size_t size)
 	if (size + BIN_HDR_SZ >= g_arena.top->size)
 		return (NULL);
 	chk = (t_chk_hdr *)((uintptr_t)g_arena.top + g_arena.size + BIN_HDR_SZ
-						- g_arena.top->size);
+					 - g_arena.top->size);
 	g_arena.top->size -= size;
 	chk->size = size;
 	chk->prv = (void *)0;
@@ -94,20 +89,13 @@ static void		*wild_split(size_t size)
 
 #include <assert.h>
 
-void					*malloc(size_t size)
+void			*malloc(size_t size)
 {
-	t_chk_hdr			*chk = NULL;
-	size_t				old_size;
+	t_chk_hdr	*chk = NULL;
 
 	if (!size)
 		return (NULL);
-	old_size = size;
 	size = calc_chk_size(size);
-	if(size < old_size + CHK_HDR_SZ || size < BIN_HDR_SZ)
-	{
-		printf("sizes : %lx %lx\n", old_size, size);
-		abort();
-	}
 	if (!g_arena.ilock && (g_arena.ilock = 1)
 	   	&& pthread_mutex_init(&g_arena.lock, NULL))
 			return (NULL);

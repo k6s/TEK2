@@ -12,7 +12,7 @@ CC	= gcc
 
 RM	= rm -f
 
-CFLAGS	= -fpic -Wall -Wextra
+CFLAGS	= -fpic -Wall -Wextra -ofast
 
 LDFLAGS = -shared
 
