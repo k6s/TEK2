@@ -1,0 +1,84 @@
+#ifndef MALLOC_H_
+# define MALLOC_H_
+
+# include <unistd.h>
+# include <stdint.h>
+# include <linux/types.h>
+# include <pthread.h>
+# include <stdio.h>
+# include <stdlib.h>
+# include <string.h>
+# include <stddef.h>
+# include <fcntl.h>
+
+# ifndef PAGE_SIZE
+#  define PAGE_SIZE			((unsigned)getpagesize())
+# endif
+
+# define PAGE_CACHE		64
+
+# define ALIGN_SIZE			__alignof__(unsigned long long)
+# define IS_DISALIGNED(x)	((x) % ALIGN_SIZE)
+# define DO_ALIGN(x)		((x) + ALIGN_SIZE - ((x) % ALIGN_SIZE))
+# define ALIGN(x)			(IS_DISALIGNED(x) ? DO_ALIGN(x) : (x))
+
+typedef struct s_chk_hdr	t_chk_hdr;
+typedef struct s_arena_hdr	t_arena_hdr;
+
+struct				s_arena_hdr
+{
+	t_chk_hdr		*top;
+	size_t			size;
+	pthread_mutex_t		lock;
+	char			ilock;
+	size_t			top_un_sz;
+};
+
+# define ARENA_HDR_SZ		sizeof(t_arena_hdr)
+
+extern t_arena_hdr		g_arena;
+
+# ifdef __x86_64__
+
+struct			s_chk_hdr
+{
+	uint64_t	size : 63;
+	u_char		fprv : 1;
+	t_chk_hdr	*nxt;
+	t_chk_hdr	*prv;
+};
+
+# else
+
+struct			s_chk_hdr
+{
+	uint32_t	size : 31;
+	u_char		fprv : 1;
+	t_chk_hdr	*nxt;
+	t_chk_hdr	*prv;
+};
+
+# endif
+
+# define CHK_HDR_SZ		((uintptr_t)offsetof(t_chk_hdr, nxt))
+# define BIN_HDR_SZ		sizeof(t_chk_hdr)
+
+void				verb_abort(t_chk_hdr *chk, const char *pname,
+						   const char *msg);
+
+void				*arena_alloc(size_t size);
+void				arena_dealloc(void);
+
+size_t				to_chk_size(size_t size);
+int					chk_is_highest(t_chk_hdr *chk);
+void				chk_is_valid(t_chk_hdr *chk, size_t off);
+
+void				bin_lst_pop(t_chk_hdr *bin);
+void				*bin_lst_find(t_chk_hdr *free_chk, size_t size);
+size_t				bin_lst_refresh(uintptr_t limit);
+
+void				show_alloc_mem(void);
+void				*malloc(size_t size);
+void				free(void *ptr);
+
+#endif

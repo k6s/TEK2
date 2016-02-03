@@ -1,14 +1,11 @@
 #include "malloc.h"
-
-static void			is_chk_valid(t_chk_hdr *chk, size_t off)
+void				verb_abort(t_chk_hdr *chk, const char *pname,
+						   const char *msg)
 {
-	if ((!chk->size && off < g_arena.size) || chk->size > g_arena.size)
-	{
-		fprintf(stderr, "*** Error: is_chk_valid(): Invalid next chunk %p ***\n",
-							(void *)((uintptr_t)chk + chk->size));
-		abort();
-	}
+	fprintf(stdout, "*** Error: %s(): %s: %p ***\n", pname, msg, chk);
+	abort();
 }
+
 
 static void			show_chk(void)
 {
@@ -20,9 +17,10 @@ static void			show_chk(void)
 	while (sz < g_arena.size)
 	{
 		printf("0x%lx - 0x%lx: 0x%04lx\n", (uintptr_t)chk,
-				(uintptr_t)chk + chk->size, chk->size);
+				(uintptr_t)chk + (uintptr_t)chk->size,
+				(uintptr_t)chk->size);
 		sz += chk->size;
-		is_chk_valid(chk, sz);
+		chk_is_valid(chk, sz);
 		chk = (void *)((uintptr_t)chk + chk->size);
 	}
 }
@@ -36,7 +34,8 @@ static void			show_bin(void)
 	while (bin)
 	{
 		printf("0x%04lx - 0x%04lx: 0x%04lx\n", (uintptr_t)bin,
-				(uintptr_t)bin + bin->size, bin->size);
+				(uintptr_t)bin + (uintptr_t)bin->size,
+				(uintptr_t)bin->size);
 		bin = bin->nxt;
 	}
 }

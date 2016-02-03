@@ -12,28 +12,40 @@ CC	= gcc
 
 RM	= rm -f
 
-CFLAGS	= -fpic -Wall -Wextra -ofast
+CFLAGS	:= -fpic -Wall -Wextra -Ofast
 
-LDFLAGS = -shared
+LDFLAGS := -shared -lpthread
 
 NAME	= libmy_malloc.so
 
-SRCS	= malloc.c free.c show_alloc_mem.c realloc.c calloc.c
+SRCS	= malloc.c \
+		  free.c \
+		  show_alloc_mem.c \
+		  realloc.c \
+		  calloc.c \
+		  arena.c \
+		  chk.c \
+		  bin_lst.c
 
-OBJS	= $(SRCS:.c=.o)
+OBJS	= $(addprefix obj/, $(notdir $(SRCS:.c=.o)))
 
-all:	$(NAME)
+all:	obj/ $(NAME)
+
+obj/:
+	mkdir $@
 
 $(NAME): $(OBJS)
-	$(CC) $(OBJS) -o $(NAME) -shared -lpthread -ggdb
+	$(CC) $(OBJS) -o $(NAME) $(LDFLAGS)
 
-%.o:%.c
-	$(CC) $(CFLAGS) -o $@ $< -c -ggdb
+obj/%.o: src/%.c
+	$(CC) $(CFLAGS) -o $@ $< -c -I include/
 
 clean:
-	$(RM) $(OBJS)
+	rm -rf obj/
 
 fclean: clean
 	$(RM) $(NAME)
 
 re: fclean all
+
+.PHONY: clean re fclean all

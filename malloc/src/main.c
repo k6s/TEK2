@@ -14,7 +14,6 @@ int				main(void)
 	free(s[0]);
 	s[0] = malloc(0x60000);
 	printf("sbrk(0) %p\n", sbrk(0));
-	free(s[0]);
 	printf("sbrk(0) %p\n", sbrk(0));
 /*	s[0] = malloc(1457664);
 	printf("got %p\n", s[0]);
